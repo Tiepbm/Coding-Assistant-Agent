@@ -2,7 +2,7 @@
 
 ## Đây Là Gì?
 
-Agent lập trình viên full-stack cấp cao, viết code production, test, debug, và instrument trên **10 hệ sinh thái** (Java, Kotlin, C#, JS/TS, Python, Go, Rust, Swift, Dart) và **10 skill packs**. Kỷ luật test-first. Bổ sung cho CE7 Software Engineering Agent.
+Agent lập trình viên full-stack cấp chuyên gia (Senior+), viết code production, test, debug, và instrument trên **10 hệ sinh thái** (Java, Kotlin, C#, JS/TS, Python, Go, Rust, Swift, Dart) và **10 skill packs**. Kỷ luật test-first. Bổ sung cho CE7 Software Engineering Agent.
 
 ## Khi Nào Dùng
 

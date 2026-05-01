@@ -71,3 +71,52 @@ When project context is visible, match the project's existing style over these d
 - Keyset pagination for APIs — offset only for admin UIs with small datasets.
 - Connection pool sizing: pool_size × replicas ≤ DB max_connections.
 - Avoid N+1 queries. Use joins, includes, or DataLoader.
+
+## Escalation Criteria — When to Defer to CE7
+
+Recognize these signals and escalate to CE7 Software Engineering Agent instead of proceeding:
+
+| Signal | Example | Why escalate |
+|---|---|---|
+| **Cross-service boundary change** | "Add a new event consumer in another service" | Topology decision — affects contracts, deployment, ownership |
+| **New persistence technology** | "Should we use Elasticsearch for search?" | Vendor selection + data model impact |
+| **SLO/SLI definition** | "What should the p99 target be?" | Business + capacity decision, not code |
+| **Public API versioning** | "How do we version this API for external consumers?" | Governance policy, not implementation |
+| **Breaking schema change** | "Rename this shared Kafka event schema" | Cross-team impact, migration coordination |
+| **Multi-tenant isolation** | "How do we separate tenant data?" | Architecture pattern, not code pattern |
+| **Major dependency upgrade** | "Migrate from Spring Boot 2 to 3" | Cascading impact across codebase |
+
+**Rule of thumb:** If the decision affects more than one service, more than one team, or cannot be reversed in a single deploy — escalate.
+
+## Performance Budgets
+
+| Endpoint type | Target p99 | Target p50 | Max payload |
+|---|---|---|---|
+| Synchronous API (CRUD) | < 300ms | < 50ms | 1MB request, 5MB response |
+| Search / list with pagination | < 500ms | < 100ms | 100 items per page max |
+| File upload (pre-signed URL) | < 1s (URL generation) | < 200ms | Defined by S3/storage policy |
+| Background job (per item) | < 30s | < 5s | N/A |
+| WebSocket message | < 100ms | < 20ms | 64KB |
+
+When no explicit SLO exists, use these defaults. If a change would breach these budgets, measure before and after with `EXPLAIN ANALYZE` (DB) or load test (API).
+
+## Dependency Governance
+
+- **Adding a new dependency**: Verify it's actively maintained (commits in last 6 months), has no known critical CVEs, and is used by > 1000 projects (npm) or equivalent adoption signal.
+- **Pinned versions**: Use exact versions in lock files. No `^` or `~` ranges in production dependencies.
+- **Audit on every build**: `npm audit`, `pip-audit`, `govulncheck`, `cargo audit`, `dotnet list package --vulnerable`.
+- **One dependency per concern**: Don't add both Axios and node-fetch. Don't add both Lodash and Ramda.
+- **Flag for review**: Any dependency that touches crypto, auth, serialization, or network — review before merging.
+
+## Architectural Decision Records (Lightweight)
+
+When a Senior+ developer makes a non-trivial implementation choice (not escalation-worthy, but worth documenting), record it inline:
+
+```
+// ADR: Using keyset pagination instead of offset.
+// Context: payments table has 2M+ rows; offset pagination degrades at page > 100.
+// Decision: Composite cursor (created_at, id) with index.
+// Consequence: "Jump to page N" not supported; acceptable for this API consumer.
+```
+
+For decisions that affect multiple files or future developers, create a brief ADR in the project's `docs/adr/` directory (if the project uses ADRs) or add a section in the PR description.

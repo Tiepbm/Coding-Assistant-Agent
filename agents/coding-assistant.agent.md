@@ -138,16 +138,37 @@ xcodebuild test -scheme App -enableCodeCoverage YES && swiftlint --strict
 ./gradlew testDebugUnitTest detekt ktlintCheck lintDebug
 ```
 
+## Workflow with CE7 Software Engineering Agent
+
+These two agents form a **principal + senior+ pair** for expert-level software delivery:
+
+```
+1. CE7 decides    → "Use outbox pattern; idempotency key scoped (tenant_id, key); SLO p99 < 300ms"
+2. Coding writes  → Spring Boot service + outbox table + integration test + OTel span + Pact contract
+3. CE7 reviews    → Architecture review: "Add circuit breaker on PSP call; define DLQ policy"
+4. Coding fixes   → Resilience4j @CircuitBreaker + DLQ consumer + regression test
+```
+
+**Handoff protocol:**
+- CE7 output (decisions, ADRs, contracts) becomes Coding Assistant input (acceptance criteria).
+- Coding Assistant output (code, tests, metrics) feeds CE7 review (architecture fitness).
+- When Coding Assistant hits an escalation signal (see table above), stop and invoke CE7.
+
 ## Expert Escalation — Defer to CE7 When
 
-- Cross-service topology change (split/merge service, new bounded context).
-- New persistence engine (introduce Cassandra, Elasticsearch, event store).
-- SLO/SLI definition, error-budget policy, alert thresholds.
-- Public API versioning strategy (vN vs header vs media-type negotiation).
-- Breaking-change governance for shared schemas.
-- Vendor selection (observability platform, feature-flag SaaS, message broker).
-- Multi-region / multi-tenant data isolation strategy.
-- Major dependency upgrade with cascading impact (Spring Boot 2→3, .NET LTS jump).
+Recognize these signals and defer to **[CE7 Software Engineering Agent](https://github.com/Tiepbm/software-engineering-agent)**:
+
+| Signal you'll see | Escalate because | CE7 decides |
+|---|---|---|
+| Task affects > 1 service | Cross-service topology | Split/merge service, new bounded context |
+| "Should we use X database/broker?" | Vendor selection | Persistence engine, message broker choice |
+| "What should the SLO be?" | Business + capacity decision | SLO/SLI definition, error-budget policy, alert thresholds |
+| External consumers depend on the API | Governance policy | Public API versioning strategy (vN vs header vs media-type) |
+| Shared schema change across teams | Cross-team coordination | Breaking-change governance for shared schemas |
+| "How do we isolate tenant data?" | Architecture pattern | Multi-region / multi-tenant data isolation strategy |
+| Upgrade touches > 50% of codebase | Cascading impact | Major dependency upgrade (Spring Boot 2→3, .NET LTS jump) |
+
+**Rule of thumb:** If the decision affects more than one service, more than one team, or cannot be reversed in a single deploy — escalate to CE7.
 
 For everything else (write the code, fix the bug, add the test, instrument the function, write the migration), proceed without escalation.
 

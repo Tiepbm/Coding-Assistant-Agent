@@ -11,7 +11,7 @@
 
 ```
 CE7 Agent = Principal Engineer (quyết định thiết kế)
-Coding Assistant = Senior Developer (viết code, test, debug)
+Coding Assistant = Senior+ Developer (viết code, test, debug)
 
 Workflow:
   CE7: "Dùng outbox pattern, idempotency key scoped (tenant_id, key), Redis lock + DB record"
@@ -199,7 +199,7 @@ Senior full-stack developer. Write code, tests, debug. Test-first discipline.
 
 | Khía cạnh | CE7 Agent | Coding Assistant |
 |---|---|---|
-| Vai trò | Principal Engineer / Architect | Senior Developer |
+| Vai trò | Principal Engineer / Architect | Senior+ Developer |
 | Output | Decisions, trade-offs, checklists | Working code + tests |
 | Focus | "Nên dùng pattern nào?" | "Đây là code implement pattern đó" |
 | TDD | Mentions testing strategy | Enforces test-first workflow |

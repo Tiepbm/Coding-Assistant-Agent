@@ -1,11 +1,11 @@
 # Coding Assistant Agent
 
-Agent lập trình viên full-stack cấp cao. Viết code production, test, debug, và instrument trên **10 hệ sinh thái** (Java, Kotlin, C#, JS/TS, Python, Go, Rust, Swift, Dart) và **10 skill packs**. Kỷ luật test-first. Bổ sung cho CE7 Software Engineering Agent.
+Agent lập trình viên full-stack cấp chuyên gia (Senior+). Viết code production, test, debug, và instrument trên **10 hệ sinh thái** (Java, Kotlin, C#, JS/TS, Python, Go, Rust, Swift, Dart) và **10 skill packs**. Kỷ luật test-first. Bổ sung cho CE7 Software Engineering Agent.
 
 ## Tổng Quan
 
 - **[CE7 Software Engineering Agent](https://github.com/Tiepbm/software-engineering-agent)** = Principal Engineer → quyết định kiến trúc, trade-off, governance, SLO, vendor selection.
-- **Coding Assistant** = Senior+ Developer → code hoạt động, test, debug, instrumentation, contracts (chỉ implementation).
+- **Coding Assistant** = Senior+ Developer (chuyên gia cao cấp) → code hoạt động, test, debug, instrumentation, contracts (chỉ implementation).
 
 ## Cài Đặt
 
