@@ -32,6 +32,7 @@ description: 'Use when writing server-side code: REST APIs, services, data acces
 | `go-standard` | Go HTTP handlers, sqlc/pgx data access, errgroup, table-driven tests, govulncheck. |
 | `rust-axum` | Rust + Axum extractors, sqlx, thiserror + IntoResponse, tokio tests. |
 | `concurrency-patterns` | Cross-stack concurrency: virtual threads, Channels, p-limit, TaskGroup, errgroup, JoinSet. |
+| `resilience-handoff` | Wiring timeouts/retries/circuit-breaker/bulkhead in code; routes pattern + threshold decisions to CE7. |
 
 ## Cross-Pack Handoffs
 - → `database-pack` for SQL queries, migrations, ORM configuration.
@@ -39,3 +40,4 @@ description: 'Use when writing server-side code: REST APIs, services, data acces
 - → `quality-pack` for code review and security coding patterns.
 - → `devops-pack` for containerization and CI/CD of backend services.
 - → `frontend-pack` when backend serves a frontend (API contracts, CORS, auth tokens).
+- → `software-engineering-agent/skills/resilience-performance-pack` for resilience pattern + threshold design (per `resilience-handoff`).

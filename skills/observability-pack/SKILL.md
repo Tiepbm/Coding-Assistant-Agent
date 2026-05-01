@@ -25,10 +25,13 @@ description: 'Use when instrumenting code for logs, traces, and metrics: structu
 | `structured-logging` | JSON logs, log levels, correlation IDs, sensitive-data redaction per stack. |
 | `otel-tracing` | Distributed tracing setup, manual spans, context propagation, attribute conventions. |
 | `metrics-instrumentation` | Counters/histograms/gauges, RED/USE method, label cardinality, Prometheus + OTel. |
+| `runbook-snippets` | Authoring a one-screen operator runbook entry that ships next to a new endpoint/job/consumer. |
 
 ## Cross-Pack Handoffs
 - → `debugging-pack/production-debugging` for using these signals during incidents.
 - → `api-design-pack/openapi-first` for span attribute naming aligned with operationId.
 - → `backend-pack/<stack>` for the production code being instrumented.
 - → `devops-pack/ci-cd-pipelines` for shipping collector configs and dashboards-as-code.
+- → `quality-pack/release-safety` for the rollout/SLO-gate that the runbook describes.
+- → `software-engineering-agent/skills/observability-release-pack/incident-response-and-postmortem` for severity matrix + postmortem template.
 

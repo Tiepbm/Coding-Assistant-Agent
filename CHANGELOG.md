@@ -2,6 +2,73 @@
 
 All notable changes to the Coding Assistant Agent will be documented in this file.
 
+## [1.2.0] - 2026-05-01 - Expert Discipline
+
+### Added - Agent (system prompt overhaul)
+
+- **6-step Mandatory Workflow** in `agents/coding-assistant.agent.md`: Clarify -> Plan -> Test-first -> Implement -> Self-Review -> Verify.
+- **Clarify-First Protocol** with 6 lenses (contract, data lifecycle, security boundary, migration safety, rollout, idempotency); cap of 3-5 questions, batched, only when material.
+- **Self-Review Checklist** (11 items) — agent must tick before declaring done.
+- **Production Readiness Mini-Bar** (5 lines: idempotency, observability, tenant authz, rollback, runbook line) auto-applied to money/state/PII paths.
+- **Auto-Attach Rules** for observability hooks (new endpoint/job/consumer) and money/state code (security + flag + migration safety).
+- **Workflow with CE7 Software Engineering Agent** section + **Expert Escalation table** (15 rows linking signals to specific CE7 references).
+
+### Added - Skills
+
+- **`quality-pack/architecture-handoff`** (shim): inline-ADR vs CE7 ADR; how to read/return the Implementation Input Package.
+- **`quality-pack/security-handoff`** (shim): always-on security rules + escalation to CE7 security-review.
+- **`quality-pack/release-safety`**: feature flag + SLO gate + rollback drill + expand->migrate->contract coordination.
+- **`backend-pack/resilience-handoff`** (shim): wiring timeouts/retries/circuit/bulkhead; routes pattern + threshold decisions to CE7.
+- **`database-pack/storage-search-handoff`** (shim): wiring S3/object-storage SDK + signed URLs + search index; routes retention/projection design to CE7.
+- **`observability-pack/runbook-snippets`**: one-screen operator runbook entry that ships next to a new endpoint/job/consumer.
+
+### Added - Repo infrastructure
+
+- **`AGENTS.md`** — contributor & maintainer guide (paired with CE7's AGENTS.md).
+- **`HANDOFF-PROTOCOL.md`** — canonical contract with CE7 (mirrored byte-for-byte from `software-engineering-agent`); covers boundary table, Implementation Input Package (CE7 -> Coding), Implementation Return Package (Coding -> CE7), re-engagement triggers.
+- **`scripts/validate_packs.py`** — structural validator (10 packs, 49 references, agent shape, HANDOFF presence, benchmark presence). Soft caps for legacy refs; strict for new shim refs and packs.
+- **`instructions/principal-agent-maintenance.instructions.md`** — maintainer rules for editing the agent.
+- **`instructions/principal-skills-maintenance.instructions.md`** — maintainer rules for editing pack SKILL.md and references.
+- **`instructions/pack-conventions.instructions.md`** — expanded with CI-enforced line caps, cross-pack hygiene rules, shim-ref special rules.
+
+### Added - Evals
+
+- **`evals/handoff-benchmark.jsonl`** — 10 cases that intentionally exceed Coding's authority; agent must escalate to a specific CE7 reference (`expected_handoff_reference`).
+- **`evals/anti-pattern-benchmark.jsonl`** — 10 cases enforcing must-do/must-not-do (SQLi, Thread.sleep in test, route-only authz, secrets in Dockerfile, FLOAT for money, PII in logs, unbounded retry, big-bang migration, untenanted cache, unverified webhook).
+- **10 expert-judgment cases** appended to `evals/coding-benchmark.jsonl` (code-030..code-039): ambiguous spec, perf trade-off, release safety, concurrent write race, multi-tenant authz hole, PII redaction, outbox pattern, GDPR export, idempotent retries, runbook authoring.
+- **`evals/rubric.md`** upgraded: 60 deterministic + 40 senior-judgment dimensions (clarify-quality, trade-off, security depth, observability, release safety, handoff to CE7); LLM-judge prompt template.
+
+### Added - Docs
+
+- **`docs/INSTALL.md`** + `INSTALL.vi-VN.md` — three install modes (per-project, global, paired with CE7).
+- **`docs/pipeline-guide.md`** + `pipeline-guide.vi-VN.md` — end-to-end benchmark execution.
+- **`docs/evaluation-improvement-playbook.md`** + `evaluation-improvement-playbook.vi-VN.md` — 5-step regression-fix cycle.
+- **`docs/skill-pack-quality-rubric.md`** — gates for adding/editing a pack.
+
+### Added - Examples + Memory
+
+- **`examples/expert-payment-idempotency.md`** — end-to-end CE7 -> Coding -> CE7 walkthrough for an idempotent payment-capture endpoint.
+- **`memory/`** scaffolding (README, learned-patterns.md, routing-corrections.jsonl, interaction-log.jsonl) for the quarterly self-improvement cycle.
+
+### Changed
+
+- **`agents/coding-assistant.agent.md`** rewritten end-to-end: senior+ implementer, paired with CE7, ~330 lines (was ~210). Mirrored to `.github/agents/`.
+- **`skills/quality-pack/SKILL.md`** — registered 3 new refs; added CE7 cross-pack handoffs.
+- **`skills/backend-pack/SKILL.md`** — registered `resilience-handoff` ref.
+- **`skills/database-pack/SKILL.md`** — registered `storage-search-handoff` ref.
+- **`skills/observability-pack/SKILL.md`** — registered `runbook-snippets` ref.
+- Reference count: 39 -> 49.
+
+### Migration Notes (v1.1 -> v1.2)
+
+- No breaking changes to existing references.
+- Agent file is fully rewritten — re-copy to global config / mirror.
+- `HANDOFF-PROTOCOL.md` is now required at repo root; CI will fail without it.
+- `validate_packs.py` is the new authoritative structural validator (the old `validate-references.py` continues to work for cross-ref checks).
+- If you mirror to `.github/`, re-run the mirror copy (see `AGENTS.md` Workflow).
+
+---
+
 ## [1.1.1] — 2026-05-01
 
 ### Fixed
