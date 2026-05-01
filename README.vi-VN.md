@@ -4,7 +4,7 @@ Agent lập trình viên full-stack cấp cao. Viết code production, test, deb
 
 ## Tổng Quan
 
-- **CE7** = Principal Engineer → quyết định kiến trúc, trade-off, governance, SLO, vendor selection.
+- **[CE7 Software Engineering Agent](https://github.com/Tiepbm/software-engineering-agent)** = Principal Engineer → quyết định kiến trúc, trade-off, governance, SLO, vendor selection.
 - **Coding Assistant** = Senior+ Developer → code hoạt động, test, debug, instrumentation, contracts (chỉ implementation).
 
 ## Cài Đặt

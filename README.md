@@ -4,7 +4,7 @@ Senior+ full-stack developer agent. Writes production code, tests, debugs, and i
 
 ## Overview
 
-- **CE7** = Principal Engineer → architecture decisions, trade-offs, governance, SLOs, vendor selection.
+- **[CE7 Software Engineering Agent](https://github.com/Tiepbm/software-engineering-agent)** = Principal Engineer → architecture decisions, trade-offs, governance, SLOs, vendor selection.
 - **Coding Assistant** = Senior+ Developer → working code, tests, debugging, instrumentation, contracts (impl. only).
 
 ## Install
