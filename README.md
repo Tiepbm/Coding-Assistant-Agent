@@ -107,7 +107,7 @@ coding-assistant-agent/
 │   ├── devops-pack/                    # unchanged
 │   └── quality-pack/                   # +feature-flags
 ├── examples/                           # implement, debug, tdd, refactor, perf, security, fullstack
-├── evals/                              # 25-task benchmark + rubric.md + run_eval.py
+├── evals/                              # 29-task benchmark + rubric.md + run_eval.py
 ├── docs/                               # Getting started + plan
 ├── .github/                            # GitHub Copilot integration (mirror)
 └── instructions/                       # Pack conventions
@@ -121,7 +121,7 @@ python evals/run_eval.py \
   --responses runs/$RUN_ID/responses.jsonl \
   --report   runs/$RUN_ID/report.json \
   --fail-under 90 \
-  --critical-must-pass code-024,code-001,code-011,code-017,code-018
+  --critical-must-pass code-024,code-001,code-011,code-017,code-018,code-029
 ```
 
 See [evals/rubric.md](evals/rubric.md) for scoring details.

@@ -26,7 +26,7 @@ Each task in `evals/*.jsonl` is graded by `run_eval.py` against the agent's resp
 | **Test present** | 15 | Response contains a runnable test (matched by framework signature) |
 | **Compiles** | 15 | Code blocks pass language-specific lint/syntax check (best-effort) |
 
-Pass threshold per task: **75/100**.
+Pass threshold per task: **75/100** AND no explicit syntax-check failure (`compiles=false`). Skipped syntax checks do not fail snippets because many agent responses contain partial examples rather than complete projects.
 
 Suite pass threshold: **≥ 90 % of tasks pass** AND **0 critical (security/data-loss) tasks fail**.
 
@@ -35,6 +35,7 @@ Suite pass threshold: **≥ 90 % of tasks pass** AND **0 critical (security/data
 - `code-024` migration safety
 - `code-001`, `code-011` parameterized queries
 - `code-017`, `code-018` secure storage (no UserDefaults/SharedPrefs leak)
+- `code-029` tenant-scoped resource authorization (IDOR regression)
 
 ## Running
 
@@ -61,7 +62,7 @@ python evals/run_eval.py \
       --responses runs/${{ github.sha }}/responses.jsonl \
       --report   runs/${{ github.sha }}/report.json \
       --fail-under 90 \
-      --critical-must-pass code-024,code-001,code-011,code-017,code-018
+      --critical-must-pass code-024,code-001,code-011,code-017,code-018,code-029
 ```
 
 Exit code: 0 if pass-rate ≥ `--fail-under` AND all `--critical-must-pass` pass, else non-zero → blocks merge.
@@ -77,7 +78,7 @@ Exit code: 0 if pass-rate ≥ `--fail-under` AND all `--critical-must-pass` pass
 
 ## Benchmark Coverage Matrix
 
-Current coverage of `coding-benchmark.jsonl` (25 tasks) across packs and languages:
+Current coverage of `coding-benchmark.jsonl` (29 tasks) across packs and languages:
 
 | Pack | Tasks | Languages covered |
 |---|---|---|
@@ -87,13 +88,13 @@ Current coverage of `coding-benchmark.jsonl` (25 tasks) across packs and languag
 | `database-pack` | code-010, 024 (2) | TypeScript, SQL |
 | `api-design-pack` | code-019, 020, 021 (3) | YAML, TypeScript, Proto |
 | `observability-pack` | code-022, 023 (2) | Python, Go |
-| `testing-pack` | — (0, tested implicitly via test-present scoring) | — |
-| `debugging-pack` | — (0, covered by `debugging-benchmark.jsonl`) | — |
-| `devops-pack` | code-008, 009 (2) | Dockerfile, YAML |
-| `quality-pack` | code-025 (1) | TypeScript |
+| `testing-pack` | code-026 (1, plus test-present scoring across coding tasks) | Java |
+| `debugging-pack` | code-027 (1, plus separate `debugging-benchmark.jsonl`) | Python/prose diagnostics |
+| `devops-pack` | code-008, 009, 028 (3) | Dockerfile, YAML, TypeScript/AWS CDK |
+| `quality-pack` | code-025, 029 (2) | TypeScript |
 
 **Coverage gaps to address in future evals:**
-- `devops-pack/aws-services`: No dedicated task. Consider adding CDK or Lambda handler task.
-- `testing-pack`: Implicitly tested but no dedicated routing task. Consider adding a "write integration test with Testcontainers" task.
-- `debugging-pack`: Covered by separate `debugging-benchmark.jsonl`, not in main benchmark.
+- Add dedicated tasks for `observability-pack` in Java/.NET/Node, not only Python/Go.
+- Add mobile E2E tasks (Detox/Maestro/XCUITest/Espresso), not only unit/widget tests.
+- Add data-loss recovery / rollback drills for destructive migrations.
 

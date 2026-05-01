@@ -52,9 +52,9 @@ All notable changes to the Coding Assistant Agent will be documented in this fil
 
 ### Added — Evals
 
-- Expanded `evals/coding-benchmark.jsonl` from 10 → **25 tasks** with `must_include` / `must_not_include` / `expected_test_framework` fields.
+- Expanded `evals/coding-benchmark.jsonl` from 10 → **29 tasks** with `must_include` / `must_not_include` / `expected_test_framework` fields, including dedicated testing/debugging/AWS/security regression tasks.
 - New `evals/rubric.md` defining scoring (routing 20 + inclusion 30 + exclusion 20 + test 15 + compiles 15).
-- New `evals/run_eval.py` machine-readable scorer with `--fail-under` and `--critical-must-pass` for CI integration.
+- New `evals/run_eval.py` machine-readable scorer with best-effort syntax checks, `--fail-under`, and `--critical-must-pass` for CI integration.
 
 ### Changed
 

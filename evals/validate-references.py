@@ -5,10 +5,10 @@ Checks that:
 1. Every reference file in skills/*/references/ is listed in its pack's SKILL.md.
 2. Every reference listed in SKILL.md has a corresponding .md file.
 3. Every reference in the agent router's Language Support table exists as a file.
-4. The .github/skills/ mirror matches skills/ (same packs, same references).
+4. The .github/skills/ mirror matches skills/ (same files and content).
 
 Usage:
-    python evals/validate-references.py [--root coding-assistant-agent]
+    python evals/validate-references.py [--root .]
 """
 from __future__ import annotations
 
@@ -71,7 +71,7 @@ def validate_pack(pack_dir: Path, errors: list[str]) -> None:
 
 
 def validate_mirror(skills_dir: Path, mirror_dir: Path, errors: list[str]) -> None:
-    """Validate that .github/skills/ mirrors skills/."""
+    """Validate that .github/skills/ mirrors skills/ exactly for Markdown files."""
     if not mirror_dir.exists():
         errors.append("  .github/skills/ directory does not exist")
         return
@@ -100,16 +100,27 @@ def validate_mirror(skills_dir: Path, mirror_dir: Path, errors: list[str]) -> No
                 f"  Mirror {pack_name}: extra reference '{ref}.md'"
             )
 
+    source_files = {p.relative_to(skills_dir) for p in skills_dir.rglob("*.md")}
+    mirror_files = {p.relative_to(mirror_dir) for p in mirror_dir.rglob("*.md")}
+
+    for rel in sorted(source_files - mirror_files):
+        errors.append(f"  Mirror missing file: {rel}")
+    for rel in sorted(mirror_files - source_files):
+        errors.append(f"  Mirror has extra file: {rel}")
+    for rel in sorted(source_files & mirror_files):
+        if (skills_dir / rel).read_text() != (mirror_dir / rel).read_text():
+            errors.append(f"  Mirror file differs from source: {rel}")
+
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Validate pack ↔ reference cross-references")
     ap.add_argument(
-        "--root", type=Path, default=Path("coding-assistant-agent"),
-        help="Root directory of the coding-assistant-agent (default: coding-assistant-agent)"
+        "--root", type=Path, default=Path("."),
+        help="Root directory of the coding-assistant-agent (default: current directory)"
     )
     args = ap.parse_args()
 
-    root = args.root
+    root = args.root.resolve()
     skills_dir = root / "skills"
     mirror_dir = root / ".github" / "skills"
 

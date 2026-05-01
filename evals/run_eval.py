@@ -16,11 +16,15 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
+import shutil
+import subprocess
 import sys
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 # ---------------------------------------------------------------------------
@@ -53,6 +57,18 @@ TEST_SIGNATURES: dict[str, list[str]] = {
 
 CODE_BLOCK_RE = re.compile(r"```([a-zA-Z0-9_+-]*)?\n(.*?)```", re.DOTALL)
 
+LANG_ALIASES = {
+    "py": "python",
+    "js": "javascript",
+    "jsx": "javascript",
+    "ts": "typescript",
+    "tsx": "typescript",
+    "yml": "yaml",
+    "sh": "bash",
+    "shell": "bash",
+    "docker": "dockerfile",
+}
+
 
 @dataclass
 class TaskResult:
@@ -64,6 +80,7 @@ class TaskResult:
     forbidden_found: list[str] = field(default_factory=list)
     has_test: bool = False
     compiles: bool = True
+    syntax_checked: bool = False
     notes: list[str] = field(default_factory=list)
 
 
@@ -85,12 +102,122 @@ def extract_code(response: str) -> str:
     return "\n".join(body for _, body in CODE_BLOCK_RE.findall(response))
 
 
+def extract_code_blocks(response: str) -> list[tuple[str, str]]:
+    """Return normalized (language, code) tuples from fenced code blocks."""
+    blocks: list[tuple[str, str]] = []
+    for lang, body in CODE_BLOCK_RE.findall(response):
+        normalized = LANG_ALIASES.get(lang.lower(), lang.lower())
+        blocks.append((normalized, body))
+    return blocks
+
+
 def has_runnable_test(response: str, language: str) -> bool:
     code = extract_code(response)
     sigs = TEST_SIGNATURES.get(language.lower(), [])
     if not sigs:
         return True  # not enforced for non-code answers
     return any(re.search(p, code) for p in sigs)
+
+
+def run_command(cmd: list[str], cwd: Path | None = None) -> tuple[bool, str]:
+    """Run a syntax command and return (ok, diagnostic)."""
+    try:
+        completed = subprocess.run(
+            cmd,
+            cwd=cwd,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=10,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return False, f"syntax check timed out: {' '.join(cmd)}"
+    output = (completed.stderr or completed.stdout).strip()
+    return completed.returncode == 0, output[:500]
+
+
+def check_python_syntax(code: str) -> tuple[bool, bool, str]:
+    try:
+        ast.parse(code)
+        return True, True, ""
+    except SyntaxError as e:
+        return True, False, f"python syntax error: {e}"
+
+
+def check_json_syntax(code: str) -> tuple[bool, bool, str]:
+    try:
+        json.loads(code)
+        return True, True, ""
+    except json.JSONDecodeError as e:
+        return True, False, f"json syntax error: {e}"
+
+
+def check_external_syntax(language: str, code: str) -> tuple[bool, bool, str]:
+    """Best-effort syntax checks. Returns (checked, ok, diagnostic).
+
+    Many agent answers contain partial snippets that are not standalone programs.
+    For those languages, this function only checks when the block looks like a
+    complete file and the local toolchain is available; otherwise it skips.
+    """
+    if language == "python":
+        return check_python_syntax(code)
+    if language == "json":
+        return check_json_syntax(code)
+    if language in {"javascript", "bash"}:
+        tool = "node" if language == "javascript" else "bash"
+        if not shutil.which(tool):
+            return False, True, f"{tool} not installed; skipped syntax check"
+        suffix = ".js" if language == "javascript" else ".sh"
+        with TemporaryDirectory() as td:
+            path = Path(td) / f"snippet{suffix}"
+            path.write_text(code)
+            cmd = [tool, "--check", str(path)] if language == "javascript" else [tool, "-n", str(path)]
+            ok, diag = run_command(cmd)
+            return True, ok, diag
+    if language == "go":
+        if "package " not in code or not shutil.which("gofmt"):
+            return False, True, "go block is not a standalone file or gofmt missing; skipped syntax check"
+        with TemporaryDirectory() as td:
+            path = Path(td) / "snippet.go"
+            path.write_text(code)
+            ok, diag = run_command(["gofmt", "-w", str(path)])
+            return True, ok, diag
+    if language == "rust":
+        if not shutil.which("rustfmt"):
+            return False, True, "rustfmt not installed; skipped syntax check"
+        with TemporaryDirectory() as td:
+            path = Path(td) / "snippet.rs"
+            path.write_text(code)
+            ok, diag = run_command(["rustfmt", "--check", str(path)])
+            return True, ok, diag
+    return False, True, f"no local syntax checker configured for {language or 'unlabeled'}; skipped"
+
+
+def syntax_check_response(response: str, expected_language: str) -> tuple[bool, bool, list[str]]:
+    """Best-effort syntax validation for code blocks relevant to a task.
+
+    Returns (checked_any, all_checked_ok, notes).
+    """
+    expected = LANG_ALIASES.get(expected_language.lower(), expected_language.lower())
+    notes: list[str] = []
+    checked_any = False
+    all_ok = True
+
+    for language, code in extract_code_blocks(response):
+        # Avoid punishing explanatory YAML/JSON snippets in Java/Python answers.
+        if language and expected and language != expected:
+            continue
+        checked, ok, diagnostic = check_external_syntax(language or expected, code)
+        checked_any = checked_any or checked
+        if diagnostic:
+            notes.append(diagnostic)
+        if checked and not ok:
+            all_ok = False
+
+    if not checked_any:
+        notes.append("syntax check skipped: no standalone checkable code block/tool found")
+    return checked_any, all_ok, notes
 
 
 def score_task(task: dict[str, Any], response: dict[str, Any]) -> TaskResult:
@@ -132,14 +259,19 @@ def score_task(task: dict[str, Any], response: dict[str, Any]) -> TaskResult:
     if res.has_test:
         res.score += W_TEST
 
-    # Compiles (15) — placeholder heuristic: non-empty code block in expected language
+    # Compiles (15) — best-effort syntax check; skipped tools don't fail snippets.
     if code.strip():
-        res.score += W_COMPILES
+        checked, ok, notes = syntax_check_response(text, task.get("language", ""))
+        res.syntax_checked = checked
+        res.notes.extend(notes)
+        res.compiles = ok
+        if ok:
+            res.score += W_COMPILES
     else:
         res.compiles = False
         res.notes.append("no code block found")
 
-    res.passed = res.score >= PASS_THRESHOLD
+    res.passed = res.score >= PASS_THRESHOLD and res.compiles
     return res
 
 

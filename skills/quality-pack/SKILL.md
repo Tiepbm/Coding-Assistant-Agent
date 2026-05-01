@@ -1,6 +1,6 @@
 ---
 name: quality-pack
-description: 'Use when reviewing code, planning refactoring sequences, applying security coding patterns, or configuring linting and static analysis.'
+description: 'Use when reviewing code, planning refactoring sequences, applying security coding patterns, implementing feature flags, or configuring linting and static analysis.'
 ---
 # Quality Pack
 
@@ -8,6 +8,7 @@ description: 'Use when reviewing code, planning refactoring sequences, applying 
 - Code review: providing structured feedback with severity levels.
 - Refactoring: planning safe refactoring sequences under test coverage.
 - Security coding: applying OWASP patterns, input validation, auth.
+- Feature flags: release toggles, kill-switches, percentage rollout, stale-flag cleanup.
 - Linting and static analysis configuration.
 
 ## When NOT to Use
