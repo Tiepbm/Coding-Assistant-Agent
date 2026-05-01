@@ -26,3 +26,6 @@ yarn-error.log*
 # benchmark run outputs
 /runs/
 
+# GitHub Copilot mirror (generated from skills/)
+.github/
+
