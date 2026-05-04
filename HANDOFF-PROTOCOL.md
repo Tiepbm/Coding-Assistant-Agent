@@ -20,6 +20,23 @@ The two agents form a **principal + senior+ engineering pair**. To behave like o
 
 Anything not covered here is a gap — file an issue, do not improvise.
 
+## 1a. Multi-Agent Pattern (declared)
+
+This pair implements the **Agent Workflow** pattern (sequential, two-node), per AWS Strands multi-agent terminology and OpenAI Agents SDK *handoffs*. Explicitly **NOT**:
+
+| Pattern | Why not used here |
+|---|---|
+| Agent-as-Tool | CE7 is not a callable tool of Coding (or vice versa); they are peers with distinct authority. |
+| Swarm | No parallel competing/voting agents; one owner per turn. |
+| Agent Graph | No dynamic routing graph among >2 nodes; only a fixed two-node sequence with bidirectional handoff. |
+
+Properties:
+
+- **Direction:** bidirectional, but only one owner active per turn.
+- **Trigger to switch:** §5 Re-engagement triggers (Coding → CE7) and Implementation Input Package readiness (CE7 → Coding).
+- **State carrier:** the YAML packages in §3 and §4 are the only sanctioned state hand-off; ad-hoc context passing is forbidden.
+- **Observability:** both nodes emit the `tracing` schema declared in their respective agent files (`pattern: agent-workflow`).
+
 ## 2. Boundary (who owns what)
 
 | Concern | Owner | Why |
@@ -160,6 +177,7 @@ This protocol is itself versioned. Bump `Version` on any breaking change to the 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-05-01 | Initial protocol: boundary table, input/output packages, re-engagement triggers. |
+| 1.1.0 | 2026-05-05 | Added §1a Multi-Agent Pattern declaration (Agent Workflow, two-node sequential); aligned with AWS Strands + OpenAI Agents SDK terminology. Non-breaking. |
 
 ## 7. CI sync check (recommended)
 
