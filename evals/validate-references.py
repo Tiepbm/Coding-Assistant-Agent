@@ -136,9 +136,12 @@ def main() -> int:
         if pack_dir.is_dir():
             validate_pack(pack_dir, errors)
 
-    # Validate mirror
+    # Validate mirror (only if it exists)
     print("Checking .github/skills/ mirror...")
-    validate_mirror(skills_dir, mirror_dir, errors)
+    if mirror_dir.exists():
+        validate_mirror(skills_dir, mirror_dir, errors)
+    else:
+        print("  .github/skills/ not found (gitignored?) — skipping mirror check.")
 
     # Report
     if errors:

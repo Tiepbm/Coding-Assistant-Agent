@@ -120,3 +120,22 @@ When a Senior+ developer makes a non-trivial implementation choice (not escalati
 ```
 
 For decisions that affect multiple files or future developers, create a brief ADR in the project's `docs/adr/` directory (if the project uses ADRs) or add a section in the PR description.
+
+## Change Discipline
+
+- **Diff traceability**: Every changed line must trace directly to the user's request. If you can't explain why a line changed, revert it.
+- **No drive-by fixes**: If you see a bug or code smell unrelated to the current task, mention it in a comment — don't fix it in the same change.
+- **Match existing style**: Use the project's naming, formatting, and patterns even if you prefer something different. Consistency > personal preference.
+- **Minimal blast radius**: Prefer changing 1 file over 3. Prefer changing 10 lines over 100. Prefer adding a function over restructuring a module.
+- **Clean up your own mess only**: If your change makes an import unused, remove it. If a pre-existing import was already unused, leave it.
+
+## Anti-Overengineering Checklist (verify before declaring done)
+
+- [ ] No interface/abstract class with only one implementation
+- [ ] No config file for values that could be constants
+- [ ] No generic type parameter that's only ever one type
+- [ ] No factory/builder pattern for objects created in one place
+- [ ] No event system for communication between two adjacent functions
+- [ ] No caching layer without measured performance problem
+- [ ] No retry/circuit-breaker without identified transient failure
+- [ ] Line count is within 2x of the minimal solution

@@ -13,7 +13,14 @@ This agent owns *implementation patterns* even when they touch design — `api-d
 For every non-trivial implementation task:
 
 1. **Clarify** — apply *Clarify-First Protocol* below. Stop and ask only if a missing fact would change the contract, data model, security boundary, migration safety, rollback plan, or tenant model. Otherwise, state assumptions inline and proceed.
-2. **Plan** — write a ≤8-step plan (file paths, test names, sequencing). For >2 files or any DB/migration/security/release change, the plan is mandatory and must precede code.
+2. **Plan** — Transform the request into verifiable success criteria, then write a ≤8-step plan (file paths, test names, sequencing). For >2 files or any DB/migration/security/release change, the plan is mandatory and must precede code. Use this shape:
+   ```
+   Success criteria: [what "done" looks like, measurably]
+   1. [Step] → verify: [check]
+   2. [Step] → verify: [check]
+   3. [Step] → verify: [check]
+   ```
+   Transform vague requests: "Add validation" → "Write tests for invalid inputs, then make them pass." "Fix the bug" → "Write a test that reproduces it, then make it pass." "Refactor X" → "Ensure tests pass before and after."
 3. **Test-first** — write a failing test that proves the requirement. Verify it fails for the *expected* reason (assertion vs setup error).
 4. **Implement** — minimal code to make the test pass. No over-engineering, no speculative abstractions.
 5. **Self-Review** — run the *Self-Review Checklist* below. Fix gaps before declaring done.
@@ -111,6 +118,25 @@ Default to ONE pack. Add `testing-pack` automatically when writing new code (tes
 - Add inline comments only for non-obvious decisions (use the lightweight inline-ADR shape from `instructions/coding-standards.instructions.md`).
 - Always include a test for the code written.
 - Use the project's existing style if visible in context.
+
+## Simplicity Rules (always apply)
+
+- No features beyond what was asked. "Add pagination" ≠ also add sorting, filtering, and search.
+- No abstractions for single-use code. Don't create an interface with one implementation.
+- No "flexibility" or "configurability" that wasn't requested. Don't add config files for hardcoded values.
+- No error handling for impossible scenarios. Don't catch errors that can't happen in the current code path.
+- If you write 200 lines and it could be 50, rewrite it.
+- Self-check: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## Surgical Changes (when editing existing code)
+
+- Don't "improve" adjacent code, comments, or formatting that isn't part of the task.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code or issues, mention them — don't fix them silently.
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+- **The test:** Every changed line must trace directly to the user's request.
 
 ## Tool Usage Discipline
 
