@@ -241,6 +241,34 @@ def check_optional_benchmarks(errors: list[str]) -> None:
                 fail(errors, f"{name}:{line_no}: invalid JSON: {exc}")
 
 
+def check_cross_repo_shim_targets(errors: list[str]) -> None:
+    """Verify that shim references point to CE7 references that actually exist."""
+    ce7_root = ROOT.parent / "software-engineering-agent"
+    if not ce7_root.exists():
+        # CE7 repo not adjacent — skip cross-repo check (CI can set CE7_REPO_PATH)
+        ce7_path = os.environ.get("CE7_REPO_PATH")
+        if ce7_path:
+            ce7_root = Path(ce7_path)
+        else:
+            return
+
+    shim_refs = list(ROOT.glob("skills/*/references/*-handoff.md"))
+    for shim in shim_refs:
+        text = shim.read_text(encoding="utf-8")
+        # Look for CE7 reference paths like: software-engineering-agent/skills/<pack>/references/<ref>
+        for match in re.finditer(r"software-engineering-agent/skills/([^/]+)/references/([^\s\)\`]+)", text):
+            pack = match.group(1)
+            ref_file = match.group(2).strip("`").strip(")")
+            # Normalize: ensure .md extension exactly once
+            if ref_file.endswith(".md"):
+                ref_path = ref_file
+            else:
+                ref_path = ref_file + ".md"
+            target = ce7_root / "skills" / pack / "references" / ref_path
+            if not target.exists():
+                fail(errors, f"shim {shim.relative_to(ROOT)} references CE7 path that does not exist: skills/{pack}/references/{ref_path}")
+
+
 def check_mirror(errors: list[str]) -> None:
     if os.environ.get("CHECK_GITHUB_MIRROR") != "1":
         return
@@ -256,6 +284,7 @@ def main() -> int:
     check_handoff_protocol(errors)
     check_benchmark(errors)
     check_optional_benchmarks(errors)
+    check_cross_repo_shim_targets(errors)
     check_mirror(errors)
 
     total_refs = sum(len(v) for v in EXPECTED.values())
