@@ -1,7 +1,7 @@
 # Quality Review — Coding Assistant Agent Package
 
 **Review date**: 2026-05-05
-**Scope**: Copilot-first implementer package with 1 agent + 10 pack skills + 47 references + eval harness.
+**Scope**: Copilot-first implementer package with 1 agent + 10 pack skills + 49 references + eval harness.
 **Status**: Initial systematic review.
 
 ---
@@ -10,13 +10,13 @@
 
 | Category | Result |
 |---|---|
-| Package contents | 1 agent, 10 pack skills, 47 references (43 impl + 4 shim), 4 instruction files, Copilot `.github/` mirror, eval harness |
+| Package contents | 1 agent, 10 pack skills, 49 references (45 impl + 4 shim), 4 instruction files, Copilot `.github/` mirror, eval harness |
 | Pack frontmatter compliance | ✅ 10/10 packs use trigger-first `'Use when'` frontmatter |
 | Reference preservation | ✅ All expected references present per validator |
 | Agent routing | ✅ 6-step workflow + Clarify-First + Self-Review + Auto-Attach |
 | Agent guardrails | ✅ Input + output guardrails aligned with OpenAI Agents SDK terminology |
 | Handoff protocol | ✅ `HANDOFF-PROTOCOL.md` mirrored from CE7, v1.1.0 |
-| Structural validator | ✅ `scripts/validate_packs.py` enforces 10 packs, 47 refs, line caps, sections |
+| Structural validator | ✅ `scripts/validate_packs.py` enforces 10 packs, 49 refs, line caps, sections |
 | Eval harness | ✅ 5 benchmark suites (coding, handoff, anti-pattern, debugging, TDD) |
 | Overall score | **8.3 / 10** |
 
@@ -322,7 +322,7 @@ Scoring dimensions:
 |---|---:|---|
 | Agent quality | **8.5** | 330 lines, 6-step workflow, guardrails, poka-yoke, Auto-Attach |
 | Pack design | **8.5** | 10 packs, distinct triggers, When NOT to Use, Cross-Pack Handoffs |
-| Reference depth | **8.0** | 47 refs, 77% within cap, 23% over-cap (need split) |
+| Reference depth | **8.0** | 49 refs, 77% within cap, 23% over-cap (need split) |
 | Token efficiency | **7.5** | Over-cap refs waste tokens; shim refs are efficient |
 | Routing accuracy | **8.5** | Disambiguation table + Tie-Break Rules + Auto-Attach |
 | Eval coverage | **8.0** | 5 suites, 29+ coding tasks, senior-judgment scoring |
@@ -346,7 +346,7 @@ Scoring dimensions:
 |---|---:|---:|---|
 | Agent lines | ~110 | ~330 | Coding is 3x larger (more workflow + checklists — justified) |
 | Packs | 8 | 10 | Coding covers more stacks (impl breadth) |
-| References | 39 | 47 | Coding has more (stack-specific impl patterns) |
+| References | 39 | 49 | Coding has more (stack-specific impl patterns) |
 | Over-cap refs | 0 (post-P1/P2/P3) | 10 | Coding needs split pass |
 | Eval suites | 4 | 5 | Comparable |
 | REVIEW.md | ✅ (detailed) | ✅ (this file) | Now comparable |
