@@ -28,6 +28,9 @@ yarn-error.log*
 # benchmark run outputs
 /runs/
 
-# GitHub Copilot integration is a distribution artifact and should be tracked.
-# If generated temporary files are added later, ignore only those files here.
+# Generated GitHub Copilot mirrors and runtime artifacts.
+# Canonical sources live in agents/, instructions/, skills/, hooks/, workflows/.
+.github/
+logs/copilot/
+.handoffs/
 
