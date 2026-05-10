@@ -1,0 +1,23 @@
+adr_id: ADR-YYYY-MM-short-slug
+status: partial # implemented | partial | blocked
+files_touched: []
+production_readiness_mini_bar:
+  idempotency: N/A
+  observability: N/A
+  authz_tenant_scoped: N/A
+  rollback_path: N/A
+  runbook_line: N/A
+self_review_checklist:
+  tests_fail_then_pass: N/A
+  error_paths_covered: N/A
+  idempotency_concurrency: N/A
+  no_secrets: PASS
+  structured_logging: N/A
+  observability_hooks: N/A
+  rollback_safety: N/A
+  performance_budget: N/A
+  public_api_impact: N/A
+residual_risks: []
+open_questions_for_ce7: []
+metrics_to_watch_post_deploy: []
+

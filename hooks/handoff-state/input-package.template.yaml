@@ -1,0 +1,39 @@
+adr_id: ADR-YYYY-MM-short-slug
+title: Short implementation title
+risk_class: medium # low | medium | high | production-critical
+regulatory: none
+contract:
+  format: openapi # openapi | graphql | proto | event-schema | none
+  snippet: |
+    TODO: contract snippet
+idempotency:
+  key_shape: N/A
+  storage: N/A
+  retry_semantics: N/A
+slo:
+  latency_p99_ms: N/A
+  availability_pct: N/A
+  error_budget_pct: N/A
+data_lifecycle:
+  source_of_truth: TODO
+  history: TODO
+  derived_state: TODO
+security:
+  authz: TODO
+  pii: TODO
+  secrets: TODO
+rollout:
+  feature_flag: N/A
+  steps: []
+  duration_days: N/A
+  slo_gate: N/A
+  rollback: TODO
+runbook_stub:
+  log_fields: []
+  metric_to_watch: TODO
+  dashboard: TODO
+  replay_command: TODO
+on_call_owner: TODO
+rejected_alternatives: []
+open_questions: []
+

@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/session-logger/log-session-start.sh",
+        "cwd": ".",
+        "timeoutSec": 5,
+        "env": { "ACTIVE_AGENT": "coding" }
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/session-catchup/catchup.sh",
+        "cwd": ".",
+        "timeoutSec": 15,
+        "env": { "ACTIVE_AGENT": "coding" }
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/session-logger/log-prompt.sh",
+        "cwd": ".",
+        "timeoutSec": 5,
+        "env": { "ACTIVE_AGENT": "coding" }
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/tool-guardian/guard-tool.sh",
+        "cwd": ".",
+        "timeoutSec": 10,
+        "env": { "TOOL_GUARD_MODE": "block" }
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/routing-guard/check-boundary.sh",
+        "cwd": ".",
+        "timeoutSec": 10,
+        "env": { "ROUTING_GUARD_MODE": "warn", "ACTIVE_AGENT": "coding" }
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/pii-scanner/scan-pii.sh",
+        "cwd": ".",
+        "timeoutSec": 10,
+        "env": { "PII_MODE": "block" }
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/context-injection/inject-context.sh",
+        "cwd": ".",
+        "timeoutSec": 5,
+        "env": { "ACTIVE_AGENT": "coding" }
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/update-reminder/remind-update.sh",
+        "cwd": ".",
+        "timeoutSec": 5,
+        "env": { "ACTIVE_AGENT": "coding" }
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/handoff-validator/validate-handoff.sh",
+        "cwd": ".",
+        "timeoutSec": 10,
+        "env": { "ACTIVE_AGENT": "coding" }
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/completion-guard/check-complete.sh",
+        "cwd": ".",
+        "timeoutSec": 10,
+        "env": { "COMPLETION_GUARD_MODE": "warn", "ACTIVE_AGENT": "coding" }
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/session-logger/log-session-end.sh",
+        "cwd": ".",
+        "timeoutSec": 5,
+        "env": { "ACTIVE_AGENT": "coding" }
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/secrets-scanner/scan-secrets.sh",
+        "cwd": ".",
+        "timeoutSec": 30,
+        "env": { "SCAN_MODE": "warn", "SCAN_SCOPE": "diff" }
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/token-tracker/track-tokens.sh",
+        "cwd": ".",
+        "timeoutSec": 10,
+        "env": { "ACTIVE_AGENT": "coding" }
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/memory-save/save-interaction.sh",
+        "cwd": ".",
+        "timeoutSec": 15,
+        "env": { "ACTIVE_AGENT": "coding" }
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/pack-validator/validate-packs.sh",
+        "cwd": ".",
+        "timeoutSec": 30,
+        "env": { "ACTIVE_AGENT": "coding" }
+      }
+    ],
+    "errorOccurred": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/session-logger/log-error.sh",
+        "cwd": ".",
+        "timeoutSec": 5,
+        "env": { "ACTIVE_AGENT": "coding" }
+      }
+    ]
+  }
+}
