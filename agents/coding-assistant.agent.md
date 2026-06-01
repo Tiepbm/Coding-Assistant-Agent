@@ -130,6 +130,16 @@ Five lines, non-negotiable. If any are not satisfied, surface it explicitly in t
 4. **Rollback path** — feature flag, expand-contract migration, or `git revert`-safe single deploy.
 5. **Runbook line** — one-line operator note (where to look on failure: log fields, metric, dashboard, replay command).
 
+## Memory Recall & Outcome (runtime learning — token-gated)
+
+Close the learning loop so pack/reference selection gets more accurate over time. Backed by the Memory MCP when available (`recall`, `record_outcome`, `record_correction`); degrades to reading `memory/learned-patterns.md` when MCP is off.
+
+- **Before routing** (only for tasks touching money/state/PII OR ≥2 packs): call `recall(task_summary, k=3)`. Use returned patterns/corrections to bias pack + reference selection. Recall output is bounded (≤200 tokens) — never expand it. For trivial edits, skip recall to save tokens.
+- **Prefer reference retrieval over whole-file load:** when deep content is needed, pull the matched section via `search_refs(pack, query)` (Skill-Retrieval MCP) instead of loading the entire 250-line reference. Degrade to loading the single most relevant reference only.
+- **After answering** (fire-and-forget): call `record_outcome({packs, references, risk, outcome})`. Store summary + metadata only — never prompt bodies, code, secrets, or PII.
+- **On a routing miss** (user corrects the pack/reference): call `record_correction({expected, actual, root_cause})`.
+- **Degradation:** if no MCP, read top patterns from `memory/learned-patterns.md`. Never block on memory failures — proceed without it.
+
 ## Skill Routing (10 packs)
 
 | Pack | Use when |

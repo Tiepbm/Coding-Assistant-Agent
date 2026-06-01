@@ -66,5 +66,32 @@ entry = {
 with open(path, "a", encoding="utf-8") as f:
     f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 PY
+
+# --- Automatic capture into the Memory DB (no model needed) ---
+# Soft-fail: never break a session if Python/CLI/DB is unavailable.
+# Use only authoritative packs (from skills/<pack>/ paths) to avoid cross-agent label noise.
+if [[ -f mcp-memory/memory_cli.py ]]; then
+  packs_csv="$(FILES_FOR_PACKS="$files" python3 - <<'PY'
+import os, re
+packs = []
+for path in [l.strip() for l in os.environ.get('FILES_FOR_PACKS','').splitlines() if l.strip()]:
+    m = re.search(r'(?:^|/)skills/([^/]+)/', path)
+    if m and m.group(1) not in packs:
+        packs.append(m.group(1))
+print(",".join(packs))
+PY
+)"
+  n_files="$(printf '%s\n' "$files" | grep -c . || true)"
+  if [[ "${n_files:-0}" -gt 0 ]]; then
+    summary="auto session: ${n_files:-0} files${packs_csv:+, packs: $packs_csv}"
+    MEMORY_AGENT="${ACTIVE_AGENT:-coding}" python3 mcp-memory/memory_cli.py record-outcome \
+      --summary "$summary" \
+      --packs "${packs_csv:-}" \
+      --risk "${status:-none}" \
+      --outcome auto \
+      --source hook >/dev/null 2>&1 || true
+  fi
+fi
+
 exit 0
 

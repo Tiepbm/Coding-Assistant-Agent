@@ -34,3 +34,9 @@ yarn-error.log*
 logs/copilot/
 .handoffs/
 
+# Memory MCP local artifacts (DB lives in $HOME by default; never commit DBs/exports).
+*.db
+mcp-memory/*.db
+memory/learned-patterns.auto.md
+reports/accuracy-history.jsonl
+

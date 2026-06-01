@@ -1,0 +1,4 @@
+# MCP Python SDK — required only to run the MCP server (server.py).
+# The hook-based CLI (memory_cli.py) and core (memory_core.py) need no third-party deps.
+mcp>=1.2.0
+

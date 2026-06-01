@@ -10,6 +10,10 @@ Reads the eval report, identifies:
 - New anti-patterns discovered — logs the anti-pattern
 
 Appends entries to memory/learned-patterns.md in the standard format.
+
+Related (runtime, not eval): `mcp-memory/memory_cli.py promote` appends a deduped
+`## PROPOSED` block to the same file from real interaction memory (the Memory MCP DB).
+Run both before the weekly synthesis PR — they are complementary sources.
 """
 from __future__ import annotations
 

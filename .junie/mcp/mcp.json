@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "agent-memory": {
+      "command": "python3",
+      "args": ["mcp-memory/server.py"],
+      "env": {
+        "MEMORY_AGENT": "coding"
+      }
+    },
+    "agent-skills": {
+      "command": "python3",
+      "args": ["mcp-skills/server.py"],
+      "env": {
+        "SKILLS_DIR": "skills"
+      }
+    },
+    "agent-grounding": {
+      "command": "python3",
+      "args": ["mcp-grounding/server.py"],
+      "env": {
+        "GROUNDING_ROOT": "."
+      }
+    }
+  }
+}
+

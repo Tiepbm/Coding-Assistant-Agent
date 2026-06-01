@@ -1,0 +1,5 @@
+# MCP Python SDK — required only to run the MCP server (server.py).
+# The CLI (grounding_cli.py) and core (grounding_core.py) need no third-party deps.
+# Optional: PyYAML improves OpenAPI YAML linting (falls back to text heuristics without it).
+mcp>=1.2.0
+

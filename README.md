@@ -130,6 +130,7 @@ See [evals/rubric.md](evals/rubric.md) for scoring details.
 
 - [Getting Started](docs/GETTING-STARTED.md)
 - [Getting Started (Tiếng Việt)](docs/GETTING-STARTED.vi-VN.md)
+- [MCP Usage (memory + token-saving + grounding)](docs/mcp-usage.md)
 - [Pack Conventions](instructions/pack-conventions.instructions.md)
 - [Changelog](CHANGELOG.md)
 
