@@ -14,6 +14,32 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODE="${1:-all}"
 PASS=0; FAIL=0
 
+if [[ -z "${MEMORY_AGENT:-}" ]]; then
+  if [[ -f "$ROOT/.vscode/mcp.json" ]]; then
+    MEMORY_AGENT_FROM_CONFIG=$(python3 - "$ROOT/.vscode/mcp.json" <<'PY' 2>/dev/null || true
+import json
+import sys
+
+cfg = json.load(open(sys.argv[1]))
+for server in cfg.get("servers", {}).values():
+    agent = server.get("env", {}).get("MEMORY_AGENT")
+    if agent:
+        print(agent)
+        break
+PY
+)
+  fi
+  if [[ -n "${MEMORY_AGENT_FROM_CONFIG:-}" ]]; then
+    export MEMORY_AGENT="$MEMORY_AGENT_FROM_CONFIG"
+  else
+    case "$(basename "$ROOT")" in
+      ce7|software-engineering-agent) export MEMORY_AGENT="ce7" ;;
+      dual)                           export MEMORY_AGENT="dual" ;;
+      *)                              export MEMORY_AGENT="coding" ;;
+    esac
+  fi
+fi
+
 # Tìm MCP server dir (dev repo: mcp-memory/ ở root; bundle: .github/mcp-memory/)
 if   [[ -d "$ROOT/mcp-memory"         ]]; then MCP_MEM="$ROOT/mcp-memory";        MCP_SKL="$ROOT/mcp-skills";        MCP_GRD="$ROOT/mcp-grounding"
 elif [[ -d "$ROOT/.github/mcp-memory" ]]; then MCP_MEM="$ROOT/.github/mcp-memory"; MCP_SKL="$ROOT/.github/mcp-skills"; MCP_GRD="$ROOT/.github/mcp-grounding"
@@ -126,29 +152,41 @@ fi
 # ── Tầng 4: MCP stdio handshake (cần mcp package) ────────────────────────
 if [[ "$MODE" == "all" ]] && [[ "${HAS_MCP:-0}" == "1" ]]; then
   echo -e "${BOLD}[4] MCP stdio handshake (tools/list)${NC}"
-  info "Gửi tools/list request → server phải trả về danh sách tool"
+  info "Dùng Python MCP client gửi tools/list → server phải trả về danh sách tool"
 
   stdio_test() {
     local name="$1" script="$2"
-    # JSON-RPC initialize + tools/list qua stdin
-    payload='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}
-{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
-    # timeout 5s; server ghi ra stdout JSON-RPC — grep "tools"
-    out=$(echo "$payload" | timeout 5 python3 "$script" 2>/dev/null || true)
-    if echo "$out" | grep -q '"tools"'; then
-      tools=$(echo "$out" | python3 -c "
-import sys,json
-for line in sys.stdin:
-    try:
-        d=json.loads(line)
-        if 'result' in d and 'tools' in d['result']:
-            names=[t['name'] for t in d['result']['tools']]
-            print(', '.join(names))
-    except: pass
-" 2>/dev/null || echo "?")
+    local out status tools
+    set +e
+    out=$(python3 - "$script" <<'PY' 2>&1
+import anyio
+import sys
+
+from mcp.client.session import ClientSession
+from mcp.client.stdio import StdioServerParameters, stdio_client
+
+
+async def main() -> None:
+    script = sys.argv[1]
+    params = StdioServerParameters(command=sys.executable, args=[script])
+    async with stdio_client(params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            result = await session.list_tools()
+            print("TOOLS:" + ", ".join(t.name for t in result.tools))
+
+
+anyio.run(main)
+PY
+)
+    status=$?
+    set -e
+    if [[ $status -eq 0 ]] && echo "$out" | grep -q '^TOOLS:'; then
+      tools=$(echo "$out" | sed -n 's/^TOOLS://p' | tail -1)
       ok "$name tools: $tools"
     else
-      info "$name: không nhận được tools/list response (có thể do FastMCP version)"
+      fail "$name: không nhận được tools/list response"
+      echo "$out" | sed 's/^/       /'
     fi
   }
 
@@ -168,4 +206,3 @@ else
 fi
 echo -e "${BOLD}═══════════════════════════════════════${NC}"
 [[ $FAIL -eq 0 ]]
-
