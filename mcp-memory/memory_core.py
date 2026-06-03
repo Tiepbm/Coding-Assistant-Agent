@@ -31,6 +31,10 @@ OUTCOME_SCORES = {
 
 # Bound recall output so it never blows the token budget.
 RECALL_CHAR_BUDGET = 800  # ~200 tokens
+INDEX_CHAR_BUDGET = 1800  # ~450 tokens
+DETAILS_CHAR_BUDGET = 3200  # ~800 tokens
+MAX_INDEX_K = 12
+MAX_DETAIL_IDS = 5
 
 
 def db_path() -> Path:
@@ -318,6 +322,119 @@ def _bound(result: dict) -> dict:
         result["corrections"].pop()
         blob = json.dumps(result, ensure_ascii=False)
     return result
+
+
+def _bound_list_payload(payload: dict, list_key: str, budget: int) -> dict:
+    """Trim a payload with a list field to a fixed char budget."""
+    blob = json.dumps(payload, ensure_ascii=False)
+    while len(blob) > budget and payload.get(list_key):
+        payload[list_key].pop()
+        blob = json.dumps(payload, ensure_ascii=False)
+    return payload
+
+
+def search_memory_index(conn: sqlite3.Connection, query: str, k: int = 8) -> dict:
+    """Return compact memory hits (id + summary metadata) for two-step retrieval."""
+    k = max(1, min(int(k), MAX_INDEX_K))
+    terms = _tokenize(query)
+    rows = []
+
+    if terms and _fts_available(conn):
+        match = " OR ".join(terms)
+        try:
+            rows = conn.execute(
+                """
+                SELECT i.id, i.timestamp, i.prompt_summary, i.domain, i.packs, i.outcome, i.risk_class
+                FROM interactions_fts f
+                JOIN interactions i ON i.id = f.rowid
+                WHERE interactions_fts MATCH ?
+                ORDER BY i.id DESC
+                LIMIT ?
+                """,
+                (match, k),
+            ).fetchall()
+        except sqlite3.OperationalError:
+            rows = []
+
+    if not rows:
+        clauses = []
+        params = []
+        for t in terms[:6]:
+            like = f"%{t}%"
+            clauses.extend(["LOWER(prompt_summary) LIKE ?", "LOWER(domain) LIKE ?", "LOWER(packs) LIKE ?"])
+            params.extend([like, like, like])
+        where = f"WHERE {' OR '.join(clauses)}" if clauses else ""
+        rows = conn.execute(
+            f"""
+            SELECT id, timestamp, prompt_summary, domain, packs, outcome, risk_class
+            FROM interactions
+            {where}
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (*params, k),
+        ).fetchall()
+
+    results = []
+    for r in rows:
+        packs = _as_list(r["packs"])
+        results.append(
+            {
+                "id": r["id"],
+                "summary": (r["prompt_summary"] or "")[:96],
+                "packs": packs[:2],
+                "domain": (r["domain"] or "general")[:32],
+            }
+        )
+    return _bound_list_payload({"query": query, "results": results}, "results", INDEX_CHAR_BUDGET)
+
+
+def get_memory_details(conn: sqlite3.Connection, ids: list[int]) -> dict:
+    """Return full details for selected memory IDs (second retrieval step)."""
+    clean_ids: list[int] = []
+    for raw in ids:
+        try:
+            rid = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if rid > 0 and rid not in clean_ids:
+            clean_ids.append(rid)
+        if len(clean_ids) >= MAX_DETAIL_IDS:
+            break
+
+    if not clean_ids:
+        return {"details": []}
+
+    placeholders = ",".join("?" for _ in clean_ids)
+    rows = conn.execute(
+        f"""
+        SELECT id, timestamp, prompt_summary, domain, risk_class, packs, refs, outcome, source
+        FROM interactions
+        WHERE id IN ({placeholders})
+        """,
+        clean_ids,
+    ).fetchall()
+    by_id = {r["id"]: r for r in rows}
+
+    details = []
+    for rid in clean_ids:
+        r = by_id.get(rid)
+        if not r:
+            continue
+        details.append(
+            {
+                "id": r["id"],
+                "timestamp": r["timestamp"],
+                "summary": r["prompt_summary"],
+                "domain": r["domain"] or "general",
+                "risk_class": r["risk_class"],
+                "packs": _as_list(r["packs"]),
+                "refs": _as_list(r["refs"]),
+                "outcome": r["outcome"],
+                "source": r["source"],
+            }
+        )
+    return _bound_list_payload({"details": details}, "details", DETAILS_CHAR_BUDGET)
 
 
 def synthesize(conn: sqlite3.Connection) -> dict:

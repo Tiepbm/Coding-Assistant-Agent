@@ -62,6 +62,52 @@ class MemoryCoreTest(unittest.TestCase):
         self.assertLessEqual(len(json.dumps(res)), mc.RECALL_CHAR_BUDGET + 50)
         self.assertLessEqual(len(res["patterns"]), 3)
 
+    def test_search_memory_index_returns_ids(self):
+        mc.record_outcome(self.conn, prompt_summary="payment idempotency incident",
+                          packs="backend-pack,database-pack", domain="banking",
+                          outcome="accepted")
+        res = mc.search_memory_index(self.conn, "payment idempotency", k=5)
+        self.assertTrue(res["results"])
+        self.assertIn("id", res["results"][0])
+
+    def test_get_memory_details_by_ids(self):
+        rid = mc.record_outcome(self.conn, prompt_summary="release rollback decision",
+                                packs="observability-release-pack", domain="platform",
+                                refs="backend-pack/java", outcome="edited")
+        details = mc.get_memory_details(self.conn, [rid])
+        self.assertEqual(len(details["details"]), 1)
+        self.assertEqual(details["details"][0]["id"], rid)
+        self.assertIn("observability-release-pack", details["details"][0]["packs"])
+
+    def test_memory_index_and_details_are_bounded(self):
+        for i in range(40):
+            mc.record_outcome(self.conn, prompt_summary=f"payment topic {i} with long text",
+                              packs=f"pack-{i},database-pack", domain="banking",
+                              refs="ref-a,ref-b,ref-c", outcome="accepted")
+        import json
+        idx = mc.search_memory_index(self.conn, "payment", k=25)
+        det = mc.get_memory_details(self.conn, [r["id"] for r in idx["results"]])
+        self.assertLessEqual(len(json.dumps(idx)), mc.INDEX_CHAR_BUDGET + 80)
+        self.assertLessEqual(len(json.dumps(det)), mc.DETAILS_CHAR_BUDGET + 80)
+
+    def test_search_memory_index_caps_k(self):
+        for i in range(25):
+            mc.record_outcome(self.conn, prompt_summary=f"payment {i}",
+                              packs="backend-pack,database-pack", domain="banking",
+                              outcome="accepted")
+        res = mc.search_memory_index(self.conn, "payment", k=999)
+        self.assertLessEqual(len(res["results"]), mc.MAX_INDEX_K)
+
+    def test_get_memory_details_caps_ids(self):
+        ids = []
+        for i in range(12):
+            rid = mc.record_outcome(self.conn, prompt_summary=f"incident {i}",
+                                    packs="observability-release-pack", domain="platform",
+                                    outcome="accepted")
+            ids.append(rid)
+        det = mc.get_memory_details(self.conn, ids)
+        self.assertLessEqual(len(det["details"]), mc.MAX_DETAIL_IDS)
+
     def test_correction_penalizes(self):
         mc.record_outcome(self.conn, prompt_summary="migration", packs="core-engineering-pack",
                           domain="banking", outcome="accepted")

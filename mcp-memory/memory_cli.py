@@ -46,6 +46,13 @@ def main() -> int:
     rq.add_argument("--query", required=True)
     rq.add_argument("--k", type=int, default=3)
 
+    si = sub.add_parser("search-index")
+    si.add_argument("--query", required=True)
+    si.add_argument("--k", type=int, default=8)
+
+    gd = sub.add_parser("get-details")
+    gd.add_argument("--ids", required=True, help="Comma-separated IDs, e.g. 12,13,29")
+
     sub.add_parser("synthesize")
     sub.add_parser("stats")
 
@@ -94,6 +101,11 @@ def main() -> int:
             print(json.dumps({"ok": True, "id": rid}))
         elif args.cmd == "recall":
             print(json.dumps({"ok": True, **mc.recall(conn, args.query, args.k)}, ensure_ascii=False))
+        elif args.cmd == "search-index":
+            print(json.dumps({"ok": True, **mc.search_memory_index(conn, args.query, args.k)}, ensure_ascii=False))
+        elif args.cmd == "get-details":
+            ids = [int(x) for x in args.ids.split(",") if x.strip()]
+            print(json.dumps({"ok": True, **mc.get_memory_details(conn, ids)}, ensure_ascii=False))
         elif args.cmd == "synthesize":
             print(json.dumps({"ok": True, **mc.synthesize(conn)}))
         elif args.cmd == "stats":

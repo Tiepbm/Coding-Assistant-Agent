@@ -6,6 +6,8 @@ Storage: SQLite at $MEMORY_DB (default ~/.copilot-agent-memory/<agent>.db).
 
 Tools:
     recall(query, k)            -> bounded patterns + corrections (≤~200 tokens)
+    search_memory_index(query)  -> compact memory index (id + summary metadata)
+    get_memory_details(ids)     -> full details for selected IDs only
     record_outcome(...)         -> persist an interaction outcome
     record_correction(...)      -> persist a routing miss
     synthesize()                -> recompute pattern confidence
@@ -31,6 +33,9 @@ def _selftest() -> int:
         outcome="accepted", source="manual",
     )
     print("recall:", mc.recall(conn, "payment idempotency"))
+    idx = mc.search_memory_index(conn, "payment idempotency", 3)
+    print("search_memory_index:", idx)
+    print("get_memory_details:", mc.get_memory_details(conn, [r["id"] for r in idx["results"][:1]]))
     print("stats:", mc.get_stats(conn))
     conn.close()
     return 0
@@ -60,6 +65,24 @@ def main() -> int:
         conn = mc.connect()
         try:
             return mc.recall(conn, query, k)
+        finally:
+            conn.close()
+
+    @server.tool()
+    def search_memory_index(query: str, k: int = 8) -> dict:
+        """Return compact memory hits (id + summary metadata) for token-efficient filtering first."""
+        conn = mc.connect()
+        try:
+            return mc.search_memory_index(conn, query, k)
+        finally:
+            conn.close()
+
+    @server.tool()
+    def get_memory_details(ids: list[int]) -> dict:
+        """Return full memory details for selected IDs only (second step after index search)."""
+        conn = mc.connect()
+        try:
+            return mc.get_memory_details(conn, ids)
         finally:
             conn.close()
 

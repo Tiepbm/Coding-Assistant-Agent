@@ -70,7 +70,14 @@ PY
 # --- Automatic capture into the Memory DB (no model needed) ---
 # Soft-fail: never break a session if Python/CLI/DB is unavailable.
 # Use only authoritative packs (from skills/<pack>/ paths) to avoid cross-agent label noise.
+cli=""
 if [[ -f mcp-memory/memory_cli.py ]]; then
+  cli="mcp-memory/memory_cli.py"
+elif [[ -f .github/mcp-memory/memory_cli.py ]]; then
+  cli=".github/mcp-memory/memory_cli.py"
+fi
+
+if [[ -n "$cli" ]]; then
   packs_csv="$(FILES_FOR_PACKS="$files" python3 - <<'PY'
 import os, re
 packs = []
@@ -84,14 +91,16 @@ PY
   n_files="$(printf '%s\n' "$files" | grep -c . || true)"
   if [[ "${n_files:-0}" -gt 0 ]]; then
     summary="auto session: ${n_files:-0} files${packs_csv:+, packs: $packs_csv}"
-    MEMORY_AGENT="${ACTIVE_AGENT:-coding}" python3 mcp-memory/memory_cli.py record-outcome \
-      --summary "$summary" \
-      --packs "${packs_csv:-}" \
-      --risk "${status:-none}" \
-      --outcome auto \
-      --source hook >/dev/null 2>&1 || true
+  else
+    summary="auto session: no file diffs"
   fi
+
+  MEMORY_AGENT="${ACTIVE_AGENT:-coding}" python3 "$cli" record-outcome \
+    --summary "$summary" \
+    --packs "${packs_csv:-}" \
+    --risk "${status:-none}" \
+    --outcome auto \
+    --source hook >/dev/null 2>&1 || true
 fi
 
 exit 0
-
